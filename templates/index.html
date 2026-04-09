@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Groq Whisper STT</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: rgba(26, 29, 39, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 620px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    h1 { font-size: 1.8rem; font-weight: 700; color: #fff; margin-bottom: 8px; text-align: center; }
+    .subtitle { font-size: 0.9rem; color: #a0aec0; margin-bottom: 32px; text-align: center; }
+
+    .tabs { display: flex; gap: 12px; margin-bottom: 28px; }
+
+    .tab {
+      flex: 1; padding: 12px; border-radius: 12px;
+      border: 2px solid rgba(255,255,255,0.1); background: transparent;
+      color: #94a3b8; font-size: 0.95rem; cursor: pointer; transition: all 0.3s;
+      font-weight: 600;
+    }
+    .tab.active { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); border-color: transparent; color: #fff; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .controls { margin-bottom: 24px; }
+
+    select {
+      width: 100%; padding: 12px 16px; border-radius: 12px;
+      border: 2px solid rgba(255,255,255,0.1); background: rgba(15,17,23,0.6);
+      color: #e2e8f0; font-size: 0.9rem; cursor: pointer;
+      transition: border-color 0.3s;
+    }
+    select:focus { outline: none; border-color: #f97316; }
+
+    #file-input { display: none; }
+
+    .file-label {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      border: 3px dashed rgba(255,255,255,0.2); border-radius: 16px;
+      padding: 32px; cursor: pointer; transition: all 0.3s;
+      margin-bottom: 20px; color: #94a3b8; font-size: 0.95rem;
+      background: rgba(15,17,23,0.4);
+    }
+    .file-label:hover, .file-label.has-file { 
+      border-color: #f97316; 
+      background: rgba(249,115,22,0.1);
+      color: #fff; 
+    }
+    .file-label svg { flex-shrink: 0; }
+
+    .btn {
+      width: 100%; padding: 14px; border-radius: 12px; border: none;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: all 0.3s; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { 
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); 
+      color: #fff; 
+      box-shadow: 0 4px 15px rgba(249,115,22,0.4);
+    }
+    .btn-primary:hover:not(:disabled) { 
+      box-shadow: 0 6px 20px rgba(249,115,22,0.6);
+      transform: translateY(-2px);
+    }
+
+    .mic-area {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 20px; padding: 32px 0;
+    }
+
+    .mic-btn {
+      width: 100px; height: 100px; border-radius: 50%; border: none;
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.3s;
+      box-shadow: 0 8px 25px rgba(249,115,22,0.4);
+    }
+    .mic-btn.recording { 
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      animation: pulse 1.5s infinite;
+    }
+    .mic-btn:active { transform: scale(0.95); }
+    .mic-btn:hover { transform: scale(1.05); }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 8px 25px rgba(239,68,68,0.6); }
+      50% { box-shadow: 0 8px 40px rgba(239,68,68,0.9), 0 0 0 20px rgba(239,68,68,0); }
+    }
+
+    .mic-status { font-size: 0.95rem; color: #94a3b8; font-weight: 500; }
+    .mic-status.live { color: #ef4444; font-weight: 700; }
+
+    .result-box {
+      margin-top: 28px; background: rgba(15,17,23,0.6);
+      border: 2px solid rgba(255,255,255,0.1); border-radius: 16px;
+      padding: 24px; display: none;
+    }
+    .result-box.visible { display: block; animation: slideIn 0.4s ease; }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-text {
+      font-size: 1.1rem; line-height: 1.7;
+      color: #f1f5f9; margin-bottom: 20px; word-break: break-word;
+    }
+
+    .result-meta { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    .badge { 
+      padding: 6px 14px; border-radius: 20px; 
+      font-size: 0.8rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .badge-model  { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #fff; }
+    .badge-lang   { background: rgba(96,165,250,0.2); color: #60a5fa; border: 1px solid #60a5fa; }
+    .badge-conf   { background: rgba(52,211,153,0.2); color: #34d399; border: 1px solid #34d399; }
+    .badge-time   { background: rgba(251,191,36,0.2); color: #fbbf24; border: 1px solid #fbbf24; }
+
+    .loader { 
+      display: none; align-items: center; justify-content: center; gap: 12px; 
+      margin-top: 20px; color: #94a3b8; font-size: 0.95rem; 
+    }
+    .loader.visible { display: flex; }
+
+    .spinner {
+      width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #f97316; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg { 
+      margin-top: 16px; color: #f87171; font-size: 0.9rem; 
+      display: none; text-align: center; padding: 12px;
+      background: rgba(239,68,68,0.1); border-radius: 8px;
+      border: 1px solid rgba(239,68,68,0.3);
+    }
+    .error-msg.visible { display: block; }
+
+    .copy-btn {
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
+      color: #e2e8f0; padding: 6px 14px; border-radius: 8px; 
+      font-size: 0.8rem; cursor: pointer; margin-left: auto; 
+      transition: all 0.3s; font-weight: 600;
+    }
+    .copy-btn:hover { 
+      background: rgba(249,115,22,0.3); 
+      border-color: #f97316; 
+      color: #fff; 
+    }
+
+    .result-header { display: flex; align-items: center; margin-bottom: 12px; }
+    .result-label { 
+      font-size: 0.8rem; color: #94a3b8; 
+      text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700;
+    }
+
+    .powered-by {
+      margin-top: 24px; text-align: center; font-size: 0.75rem;
+      color: #64748b; opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>⚡ Groq Whisper STT</h1>
+    <p class="subtitle">Powered by Groq Whisper Large v3 — Lightning fast & perfect for Indian languages<br><small style="color: #f97316; font-size: 0.85rem; font-weight: 600;">⚠️ IMPORTANT: Always select the correct language before transcribing</small></p>
+
+    <!-- Controls -->
+    <div class="controls">
+      <select id="lang-select">
+        <option value="">⚠️ Select your language (required for accuracy)</option>
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+        <option value="ml">Malayalam</option>
+        <option value="ta">Tamil</option>
+        <option value="te">Telugu</option>
+        <option value="kn">Kannada</option>
+        <option value="bn">Bengali</option>
+        <option value="mr">Marathi</option>
+        <option value="gu">Gujarati</option>
+        <option value="pa">Punjabi</option>
+        <option value="ur">Urdu</option>
+      </select>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="upload">📁 Upload File</button>
+      <button class="tab" data-tab="mic">🎤 Microphone</button>
+    </div>
+
+    <!-- Upload Panel -->
+    <div class="tab-panel active" id="tab-upload">
+      <label class="file-label" for="file-input" id="file-label">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <span id="file-label-text">Click to upload audio (WAV, MP3, M4A, FLAC)</span>
+      </label>
+      <input type="file" id="file-input" accept=".wav,.mp3,.m4a,.flac,.ogg,.webm" />
+      <button class="btn btn-primary" id="transcribe-btn" disabled>Transcribe</button>
+    </div>
+
+    <!-- Mic Panel -->
+    <div class="tab-panel" id="tab-mic">
+      <div class="mic-area">
+        <button class="mic-btn" id="mic-btn" title="Click to start / stop recording">
+          <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </button>
+        <p class="mic-status" id="mic-status">Click the mic to start recording</p>
+      </div>
+    </div>
+
+    <!-- Loader -->
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      <span>Processing with Groq...</span>
+    </div>
+
+    <!-- Error -->
+    <p class="error-msg" id="error-msg"></p>
+
+    <!-- Result -->
+    <div class="result-box" id="result-box">
+      <div class="result-header">
+        <span class="result-label">Transcription</span>
+        <button class="copy-btn" id="copy-btn">Copy</button>
+      </div>
+      <p class="result-text" id="result-text"></p>
+      <div class="result-meta">
+        <span class="badge badge-model" id="badge-model"></span>
+        <span class="badge badge-lang"  id="badge-lang"></span>
+        <span class="badge badge-conf"  id="badge-conf"></span>
+        <span class="badge badge-time"  id="badge-time"></span>
+      </div>
+    </div>
+
+    <p class="powered-by">Free • 14,400 requests/day • 10x faster than alternatives</p>
+  </div>
+
+  <script>
+    const LANG_NAMES = { 
+      en:'English', hi:'Hindi', ml:'Malayalam', ta:'Tamil', te:'Telugu', 
+      kn:'Kannada', bn:'Bengali', mr:'Marathi', gu:'Gujarati', pa:'Punjabi', ur:'Urdu' 
+    };
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab, .tab-panel').forEach(el => el.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+        hideResult();
+      });
+    });
+
+    // File upload
+    const fileInput = document.getElementById('file-input');
+    const fileLabel = document.getElementById('file-label');
+    const fileLabelText = document.getElementById('file-label-text');
+    const transcribeBtn = document.getElementById('transcribe-btn');
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) {
+        fileLabelText.textContent = fileInput.files[0].name;
+        fileLabel.classList.add('has-file');
+        transcribeBtn.disabled = false;
+      }
+    });
+
+    transcribeBtn.addEventListener('click', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      
+      const language = document.getElementById('lang-select').value;
+      if (!language) {
+        showError('Please select a language from the dropdown first!');
+        return;
+      }
+      
+      const form = new FormData();
+      form.append('audio', file);
+      form.append('language', language);
+      showLoader();
+      const res = await fetch('/transcribe', { method: 'POST', body: form });
+      const data = await res.json();
+      hideLoader();
+      data.error ? showError(data.error) : showResult(data);
+    });
+
+    // Mic recording
+    const micBtn = document.getElementById('mic-btn');
+    const micStatus = document.getElementById('mic-status');
+    let isRecording = false;
+
+    micBtn.addEventListener('click', async () => {
+      if (!isRecording) {
+        const language = document.getElementById('lang-select').value;
+        if (!language) {
+          showError('Please select a language from the dropdown first!');
+          return;
+        }
+        
+        const res = await fetch('/mic/start', { method: 'POST' });
+        const data = await res.json();
+        if (data.error) return showError(data.error);
+        isRecording = true;
+        micBtn.classList.add('recording');
+        micStatus.textContent = '🔴 Recording... Click again to stop';
+        micStatus.classList.add('live');
+        hideResult();
+      } else {
+        micBtn.classList.remove('recording');
+        micStatus.textContent = 'Processing...';
+        micStatus.classList.remove('live');
+        isRecording = false;
+        showLoader();
+        const res = await fetch('/mic/stop', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            language: document.getElementById('lang-select').value
+          })
+        });
+        const data = await res.json();
+        hideLoader();
+        micStatus.textContent = 'Click the mic to start recording';
+        data.error ? showError(data.error) : showResult(data);
+      }
+    });
+
+    function showResult(data) {
+      document.getElementById('result-text').textContent = data.text || '(no speech detected)';
+      document.getElementById('badge-model').textContent = data.model || 'whisper-large-v3-groq';
+      document.getElementById('badge-lang').textContent  = LANG_NAMES[data.language] || data.language;
+      document.getElementById('badge-conf').textContent  = `${Math.round((data.confidence || 0) * 100)}%`;
+      document.getElementById('badge-time').textContent  = `${data.elapsed}s`;
+      document.getElementById('result-box').classList.add('visible');
+      document.getElementById('error-msg').classList.remove('visible');
+    }
+
+    function hideResult() {
+      document.getElementById('result-box').classList.remove('visible');
+      document.getElementById('error-msg').classList.remove('visible');
+    }
+
+    function showLoader() {
+      document.getElementById('loader').classList.add('visible');
+      transcribeBtn.disabled = true;
+    }
+
+    function hideLoader() {
+      document.getElementById('loader').classList.remove('visible');
+      transcribeBtn.disabled = false;
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = `⚠ ${msg}`;
+      el.classList.add('visible');
+    }
+
+    document.getElementById('copy-btn').addEventListener('click', () => {
+      const text = document.getElementById('result-text').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 1500);
+      });
+    });
+  </script>
+</body>
+</html>
