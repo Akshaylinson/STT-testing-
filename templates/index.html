@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Groq Whisper STT</title>
+  <title>Hybrid STT - Browser + Groq</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -32,6 +32,16 @@
     h1 { font-size: 1.8rem; font-weight: 700; color: #fff; margin-bottom: 8px; text-align: center; }
     .subtitle { font-size: 0.9rem; color: #a0aec0; margin-bottom: 32px; text-align: center; }
 
+    .controls { margin-bottom: 24px; }
+
+    select {
+      width: 100%; padding: 12px 16px; border-radius: 12px;
+      border: 2px solid rgba(255,255,255,0.1); background: rgba(15,17,23,0.6);
+      color: #e2e8f0; font-size: 0.9rem; cursor: pointer;
+      transition: border-color 0.3s;
+    }
+    select:focus { outline: none; border-color: #f97316; }
+
     .tabs { display: flex; gap: 12px; margin-bottom: 28px; }
 
     .tab {
@@ -44,16 +54,6 @@
 
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
-
-    .controls { margin-bottom: 24px; }
-
-    select {
-      width: 100%; padding: 12px 16px; border-radius: 12px;
-      border: 2px solid rgba(255,255,255,0.1); background: rgba(15,17,23,0.6);
-      color: #e2e8f0; font-size: 0.9rem; cursor: pointer;
-      transition: border-color 0.3s;
-    }
-    select:focus { outline: none; border-color: #f97316; }
 
     #file-input { display: none; }
 
@@ -133,6 +133,11 @@
       color: #f1f5f9; margin-bottom: 20px; word-break: break-word;
     }
 
+    .interim {
+      color: #94a3b8;
+      font-style: italic;
+    }
+
     .result-meta { display: flex; gap: 12px; flex-wrap: wrap; }
 
     .badge { 
@@ -142,7 +147,6 @@
     }
     .badge-model  { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #fff; }
     .badge-lang   { background: rgba(96,165,250,0.2); color: #60a5fa; border: 1px solid #60a5fa; }
-    .badge-conf   { background: rgba(52,211,153,0.2); color: #34d399; border: 1px solid #34d399; }
     .badge-time   { background: rgba(251,191,36,0.2); color: #fbbf24; border: 1px solid #fbbf24; }
 
     .loader { 
@@ -184,39 +188,53 @@
       text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700;
     }
 
-    .powered-by {
-      margin-top: 24px; text-align: center; font-size: 0.75rem;
-      color: #64748b; opacity: 0.7;
+    .info-box {
+      margin-top: 24px;
+      padding: 16px;
+      background: rgba(96,165,250,0.1);
+      border: 1px solid rgba(96,165,250,0.3);
+      border-radius: 12px;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    .info-box strong {
+      color: #60a5fa;
+      display: block;
+      margin-bottom: 8px;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>⚡ Groq Whisper STT</h1>
-    <p class="subtitle">Powered by Groq Whisper Large v3 — Lightning fast & perfect for Indian languages<br><small style="color: #34d399; font-size: 0.85rem; font-weight: 600;">✨ Auto-detects language — No manual selection needed!</small></p>
+    <h1>🎙️ Hybrid STT</h1>
+    <p class="subtitle">Browser STT for mic • Groq Whisper for file uploads</p>
+
+    <!-- Language Selection -->
+    <div class="controls">
+      <select id="lang-select">
+        <option value="">Select Language</option>
+        <option value="en-IN">English (India)</option>
+        <option value="hi-IN">Hindi (हिन्दी)</option>
+        <option value="ml-IN">Malayalam (മലയാളം)</option>
+        <option value="ta-IN">Tamil (தமிழ்)</option>
+        <option value="te-IN">Telugu (తెలుగు)</option>
+        <option value="kn-IN">Kannada (ಕನ್ನಡ)</option>
+        <option value="bn-IN">Bengali (বাংলা)</option>
+        <option value="mr-IN">Marathi (मराठी)</option>
+        <option value="gu-IN">Gujarati (ગુજરાતી)</option>
+        <option value="pa-IN">Punjabi (ਪੰਜਾਬੀ)</option>
+      </select>
+    </div>
 
     <!-- Tabs -->
     <div class="tabs">
-      <button class="tab active" data-tab="upload">📁 Upload File</button>
-      <button class="tab" data-tab="mic">🎤 Microphone</button>
-    </div>
-
-    <!-- Upload Panel -->
-    <div class="tab-panel active" id="tab-upload">
-      <label class="file-label" for="file-input" id="file-label">
-        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        <span id="file-label-text">Click to upload audio (WAV, MP3, M4A, FLAC)</span>
-      </label>
-      <input type="file" id="file-input" accept=".wav,.mp3,.m4a,.flac,.ogg,.webm" />
-      <button class="btn btn-primary" id="transcribe-btn" disabled>Transcribe</button>
+      <button class="tab active" data-tab="mic">🎤 Microphone (Browser)</button>
+      <button class="tab" data-tab="upload">📁 Upload File (Groq)</button>
     </div>
 
     <!-- Mic Panel -->
-    <div class="tab-panel" id="tab-mic">
+    <div class="tab-panel active" id="tab-mic">
       <div class="mic-area">
         <button class="mic-btn" id="mic-btn" title="Click to start / stop recording">
           <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
@@ -226,14 +244,28 @@
             <line x1="8" y1="23" x2="16" y2="23"/>
           </svg>
         </button>
-        <p class="mic-status" id="mic-status">Click the mic to start recording</p>
+        <p class="mic-status" id="mic-status">Select language, then click mic</p>
       </div>
+    </div>
+
+    <!-- Upload Panel -->
+    <div class="tab-panel" id="tab-upload">
+      <label class="file-label" for="file-input" id="file-label">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <span id="file-label-text">Click to upload audio (WAV, MP3, M4A, FLAC)</span>
+      </label>
+      <input type="file" id="file-input" accept=".wav,.mp3,.m4a,.flac,.ogg,.webm" />
+      <button class="btn btn-primary" id="transcribe-btn" disabled>Transcribe with Groq</button>
     </div>
 
     <!-- Loader -->
     <div class="loader" id="loader">
       <div class="spinner"></div>
-      <span>Processing with Groq...</span>
+      <span id="loader-text">Processing...</span>
     </div>
 
     <!-- Error -->
@@ -249,19 +281,43 @@
       <div class="result-meta">
         <span class="badge badge-model" id="badge-model"></span>
         <span class="badge badge-lang"  id="badge-lang"></span>
-        <span class="badge badge-conf"  id="badge-conf"></span>
         <span class="badge badge-time"  id="badge-time"></span>
       </div>
     </div>
 
-    <p class="powered-by">Free • 14,400 requests/day • 10x faster than alternatives</p>
+    <div class="info-box">
+      <strong>How it works:</strong>
+      🎤 Microphone: Real-time Browser STT (free, no API)<br>
+      📁 File Upload: Groq Whisper API (accurate, supports all formats)
+    </div>
   </div>
 
   <script>
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
     const LANG_NAMES = { 
-      en:'English', hi:'Hindi', ml:'Malayalam', ta:'Tamil', te:'Telugu', 
-      kn:'Kannada', bn:'Bengali', mr:'Marathi', gu:'Gujarati', pa:'Punjabi', ur:'Urdu' 
+      'en-IN': 'English', 'hi-IN': 'Hindi', 'ml-IN': 'Malayalam', 
+      'ta-IN': 'Tamil', 'te-IN': 'Telugu', 'kn-IN': 'Kannada',
+      'bn-IN': 'Bengali', 'mr-IN': 'Marathi', 'gu-IN': 'Gujarati', 'pa-IN': 'Punjabi'
     };
+
+    const GROQ_LANG_MAP = {
+      'en-IN': 'en', 'hi-IN': 'hi', 'ml-IN': 'ml', 'ta-IN': 'ta', 
+      'te-IN': 'te', 'kn-IN': 'kn', 'bn-IN': 'bn', 'mr-IN': 'mr', 
+      'gu-IN': 'gu', 'pa-IN': 'pa'
+    };
+
+    const langSelect = document.getElementById('lang-select');
+    const micBtn = document.getElementById('mic-btn');
+    const micStatus = document.getElementById('mic-status');
+    const fileInput = document.getElementById('file-input');
+    const fileLabel = document.getElementById('file-label');
+    const fileLabelText = document.getElementById('file-label-text');
+    const transcribeBtn = document.getElementById('transcribe-btn');
+
+    let recognition = null;
+    let isRecording = false;
+    let finalTranscript = '';
 
     // Tab switching
     document.querySelectorAll('.tab').forEach(tab => {
@@ -273,12 +329,88 @@
       });
     });
 
-    // File upload
-    const fileInput = document.getElementById('file-input');
-    const fileLabel = document.getElementById('file-label');
-    const fileLabelText = document.getElementById('file-label-text');
-    const transcribeBtn = document.getElementById('transcribe-btn');
+    // Microphone (Browser STT)
+    if (!SpeechRecognition) {
+      micBtn.disabled = true;
+      micStatus.textContent = '⚠️ Browser STT not supported';
+    } else {
+      micBtn.addEventListener('click', () => {
+        const lang = langSelect.value;
+        if (!lang) {
+          showError('Please select a language first');
+          return;
+        }
 
+        if (!isRecording) {
+          startBrowserSTT(lang);
+        } else {
+          stopBrowserSTT();
+        }
+      });
+    }
+
+    function startBrowserSTT(lang) {
+      finalTranscript = '';
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = lang;
+
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + ' ';
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        
+        if (finalTranscript || interimTranscript) {
+          document.getElementById('result-text').innerHTML = 
+            `<span>${finalTranscript}</span>` +
+            `<span class="interim">${interimTranscript}</span>`;
+          document.getElementById('result-box').classList.add('visible');
+          document.getElementById('badge-model').textContent = 'Browser STT';
+          document.getElementById('badge-lang').textContent = LANG_NAMES[lang];
+          document.getElementById('badge-time').textContent = 'Real-time';
+        }
+      };
+
+      recognition.onerror = (event) => {
+        if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          showError(`Recognition error: ${event.error}`);
+        }
+      };
+
+      recognition.onend = () => {
+        if (isRecording) {
+          try { recognition.start(); } catch (e) {}
+        }
+      };
+
+      isRecording = true;
+      micBtn.classList.add('recording');
+      micStatus.textContent = '🔴 Recording... Click to stop';
+      micStatus.classList.add('live');
+      hideError();
+      recognition.start();
+    }
+
+    function stopBrowserSTT() {
+      isRecording = false;
+      if (recognition) {
+        recognition.stop();
+        recognition = null;
+      }
+      micBtn.classList.remove('recording');
+      micStatus.textContent = 'Select language, then click mic';
+      micStatus.classList.remove('live');
+    }
+
+    // File Upload (Groq API)
     fileInput.addEventListener('change', () => {
       if (fileInput.files[0]) {
         fileLabelText.textContent = fileInput.files[0].name;
@@ -289,62 +421,45 @@
 
     transcribeBtn.addEventListener('click', async () => {
       const file = fileInput.files[0];
+      const lang = langSelect.value;
+      
       if (!file) return;
+      if (!lang) {
+        showError('Please select a language first');
+        return;
+      }
       
       const form = new FormData();
       form.append('audio', file);
-      showLoader();
+      form.append('language', GROQ_LANG_MAP[lang]);
+      
+      showLoader('Processing with Groq...');
       const res = await fetch('/transcribe', { method: 'POST', body: form });
       const data = await res.json();
       hideLoader();
-      data.error ? showError(data.error) : showResult(data);
-    });
-
-    // Mic recording
-    const micBtn = document.getElementById('mic-btn');
-    const micStatus = document.getElementById('mic-status');
-    let isRecording = false;
-
-    micBtn.addEventListener('click', async () => {
-      if (!isRecording) {
-        const res = await fetch('/mic/start', { method: 'POST' });
-        const data = await res.json();
-        if (data.error) return showError(data.error);
-        isRecording = true;
-        micBtn.classList.add('recording');
-        micStatus.textContent = '🔴 Recording... Click again to stop';
-        micStatus.classList.add('live');
-        hideResult();
+      
+      if (data.error) {
+        showError(data.error);
       } else {
-        micBtn.classList.remove('recording');
-        micStatus.textContent = 'Processing...';
-        micStatus.classList.remove('live');
-        isRecording = false;
-        showLoader();
-        const res = await fetch('/mic/stop', { method: 'POST' });
-        const data = await res.json();
-        hideLoader();
-        micStatus.textContent = 'Click the mic to start recording';
-        data.error ? showError(data.error) : showResult(data);
+        showResult(data);
       }
     });
 
     function showResult(data) {
       document.getElementById('result-text').textContent = data.text || '(no speech detected)';
-      document.getElementById('badge-model').textContent = data.model || 'whisper-large-v3-groq';
-      document.getElementById('badge-lang').textContent  = LANG_NAMES[data.language] || data.language;
-      document.getElementById('badge-conf').textContent  = `${Math.round((data.confidence || 0) * 100)}%`;
-      document.getElementById('badge-time').textContent  = `${data.elapsed}s`;
+      document.getElementById('badge-model').textContent = data.model || 'Groq Whisper';
+      document.getElementById('badge-lang').textContent = LANG_NAMES[langSelect.value] || data.language;
+      document.getElementById('badge-time').textContent = `${data.elapsed}s`;
       document.getElementById('result-box').classList.add('visible');
-      document.getElementById('error-msg').classList.remove('visible');
+      hideError();
     }
 
     function hideResult() {
       document.getElementById('result-box').classList.remove('visible');
-      document.getElementById('error-msg').classList.remove('visible');
     }
 
-    function showLoader() {
+    function showLoader(text) {
+      document.getElementById('loader-text').textContent = text;
       document.getElementById('loader').classList.add('visible');
       transcribeBtn.disabled = true;
     }
@@ -358,6 +473,10 @@
       const el = document.getElementById('error-msg');
       el.textContent = `⚠ ${msg}`;
       el.classList.add('visible');
+    }
+
+    function hideError() {
+      document.getElementById('error-msg').classList.remove('visible');
     }
 
     document.getElementById('copy-btn').addEventListener('click', () => {
