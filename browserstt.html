@@ -344,7 +344,7 @@
         const formData = new FormData();
         formData.append('audio', audioBlob, 'audio.webm');
 
-        const response = await fetch('/detect-language', {
+        const response = await fetch('http://localhost:5000/detect-language', {
           method: 'POST',
           body: formData
         });

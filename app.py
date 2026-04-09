@@ -14,12 +14,14 @@ import numpy as np
 import sounddevice as sd
 from scipy.io.wavfile import write as wav_write
 from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
 from groq import Groq
 from dotenv import load_dotenv
 
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -144,6 +146,11 @@ def detect_language_from_text(text: str) -> str:
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/browserstt")
+def browserstt():
+    return render_template("browserstt.html")
 
 
 @app.route("/detect-language", methods=["POST"])
