@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Browser STT - Real-time Speech Recognition</title>
+  <title>Browser STT - Auto Language Detection</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -49,30 +49,6 @@
       font-size: 0.8rem;
       margin-left: 10px;
       font-weight: 600;
-    }
-
-    .controls {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 25px;
-      flex-wrap: wrap;
-    }
-
-    select {
-      flex: 1;
-      min-width: 200px;
-      padding: 12px 16px;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
-      font-size: 0.95rem;
-      background: white;
-      cursor: pointer;
-      transition: border-color 0.3s;
-    }
-
-    select:focus {
-      outline: none;
-      border-color: #667eea;
     }
 
     .mic-container {
@@ -274,25 +250,9 @@
 <body>
   <div class="container">
     <h1>🎙️ Browser STT</h1>
-    <p class="subtitle">Real-time speech recognition with auto language detection</p>
+    <p class="subtitle">Auto language detection powered by Groq + Browser STT</p>
 
     <div id="alert" class="alert"></div>
-
-    <div class="controls">
-      <select id="language-select">
-        <option value="auto">🌐 Auto-detect (Smart Mode)</option>
-        <option value="en-IN">English (India)</option>
-        <option value="hi-IN">Hindi (हिन्दी)</option>
-        <option value="ml-IN">Malayalam (മലയാളം)</option>
-        <option value="ta-IN">Tamil (தமிழ்)</option>
-        <option value="te-IN">Telugu (తెలుగు)</option>
-        <option value="kn-IN">Kannada (ಕನ್ನಡ)</option>
-        <option value="bn-IN">Bengali (বাংলা)</option>
-        <option value="mr-IN">Marathi (मराठी)</option>
-        <option value="gu-IN">Gujarati (ગુજરાતી)</option>
-        <option value="pa-IN">Punjabi (ਪੰਜਾਬੀ)</option>
-      </select>
-    </div>
 
     <div class="mic-container">
       <button id="mic-button" class="mic-button" title="Click to start/stop">
@@ -322,10 +282,10 @@
     <div class="features">
       <h3>Features</h3>
       <ul>
-        <li>Smart auto-detection for Indian languages</li>
+        <li>Automatic language detection (no manual selection)</li>
+        <li>Groq Whisper detects from first 3 seconds</li>
         <li>Native script output (हिन्दी, മലയാളം, தமிழ், తెలుగు)</li>
-        <li>Real-time continuous recognition</li>
-        <li>No API keys or internet required</li>
+        <li>Real-time continuous transcription</li>
         <li>Works in Chrome, Edge, Safari</li>
       </ul>
     </div>
@@ -342,23 +302,30 @@
       const micButton = document.getElementById('mic-button');
       const statusText = document.getElementById('status');
       const transcriptDiv = document.getElementById('transcript');
-      const languageSelect = document.getElementById('language-select');
       const copyBtn = document.getElementById('copy-btn');
       const clearBtn = document.getElementById('clear-btn');
       const alertDiv = document.getElementById('alert');
       const detectedLangBadge = document.getElementById('detected-lang');
 
-      let recognizers = [];
+      let recognition = null;
       let isListening = false;
       let finalTranscript = '';
-      let currentDetectedLang = 'en-IN';
-      let languageConfidence = 0;
-      const CONFIDENCE_THRESHOLD = 3; // Number of detections before switching
-      let currentLang = 'auto';
-      let detectedLanguage = null;
-
-      // Languages to try in auto mode
-      const autoLanguages = ['hi-IN', 'ml-IN', 'ta-IN', 'te-IN', 'kn-IN', 'en-IN'];
+      let mediaRecorder = null;
+      let audioChunks = [];
+      let isDetecting = false;
+      
+      const langMap = {
+        'hi': 'hi-IN',
+        'ml': 'ml-IN',
+        'ta': 'ta-IN',
+        'te': 'te-IN',
+        'kn': 'kn-IN',
+        'bn': 'bn-IN',
+        'mr': 'mr-IN',
+        'gu': 'gu-IN',
+        'pa': 'pa-IN',
+        'en': 'en-IN'
+      };
       
       const langNames = {
         'hi-IN': 'Hindi',
@@ -373,14 +340,32 @@
         'en-IN': 'English'
       };
 
+      async function detectLanguage(audioBlob) {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'audio.webm');
+
+        const response = await fetch('/detect-language', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Language detection failed');
+        }
+
+        const result = await response.json();
+        return result.language;
+      }
+
       function createRecognizer(lang) {
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.maxAlternatives = 1;
-        recognition.lang = lang;
+        const rec = new SpeechRecognition();
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.maxAlternatives = 1;
+        rec.lang = lang;
         
-        recognition.onresult = (event) => {
+        rec.onresult = (event) => {
           let interimTranscript = '';
           
           for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -388,13 +373,6 @@
             
             if (event.results[i].isFinal) {
               finalTranscript += transcript + ' ';
-              
-              // Update detected language badge
-              if (currentLang === 'auto') {
-                detectedLanguage = lang;
-                detectedLangBadge.textContent = langNames[lang] || lang;
-                detectedLangBadge.style.display = 'inline-block';
-              }
             } else {
               interimTranscript += transcript;
             }
@@ -410,65 +388,97 @@
           }
         };
 
-        recognition.onerror = (event) => {
+        rec.onerror = (event) => {
           if (event.error !== 'no-speech' && event.error !== 'aborted') {
-            console.error(`Recognition error (${lang}):`, event.error);
+            console.error('Recognition error:', event.error);
           }
         };
 
-        recognition.onend = () => {
-          if (isListening && currentLang !== 'auto') {
+        rec.onend = () => {
+          if (isListening && !isDetecting) {
             try {
-              recognition.start();
+              rec.start();
             } catch (e) {}
           }
         };
 
-        return recognition;
+        return rec;
       }
 
-      function startListening() {
+      async function startListening() {
         finalTranscript = '';
         isListening = true;
+        isDetecting = true;
         micButton.classList.add('listening');
-        statusText.textContent = '🔴 Listening...';
+        statusText.textContent = '🔍 Detecting language... (speak for 3 seconds)';
         statusText.classList.add('active');
         alertDiv.style.display = 'none';
+        audioChunks = [];
 
-        if (currentLang === 'auto') {
-          // Start recognizers for all languages
-          recognizers = autoLanguages.map(lang => {
-            const rec = createRecognizer(lang);
-            try {
-              rec.start();
-            } catch (e) {
-              console.error(`Failed to start ${lang}:`, e);
-            }
-            return rec;
-          });
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
           
-          showInfo('🌐 Auto-detecting language... Speak now!');
-        } else {
-          // Single language mode
-          const rec = createRecognizer(currentLang);
-          recognizers = [rec];
-          try {
-            rec.start();
-          } catch (e) {
-            showError('Failed to start microphone');
-            stopListening();
-          }
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              audioChunks.push(event.data);
+            }
+          };
+
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            
+            try {
+              statusText.textContent = '🔍 Analyzing with Groq...';
+              const langCode = await detectLanguage(audioBlob);
+              const browserLang = langMap[langCode] || 'en-IN';
+              
+              detectedLangBadge.textContent = `Detected: ${langNames[browserLang] || browserLang}`;
+              detectedLangBadge.style.display = 'inline-block';
+              
+              showInfo(`✓ Detected ${langNames[browserLang]}! Now transcribing...`);
+              
+              isDetecting = false;
+              recognition = createRecognizer(browserLang);
+              recognition.start();
+              statusText.textContent = `🔴 Transcribing in ${langNames[browserLang]}...`;
+              
+            } catch (error) {
+              showError(error.message);
+              stopListening();
+            }
+            
+            stream.getTracks().forEach(track => track.stop());
+          };
+
+          mediaRecorder.start();
+          
+          setTimeout(() => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+              mediaRecorder.stop();
+            }
+          }, 3000);
+          
+        } catch (error) {
+          showError('Microphone access denied: ' + error.message);
+          stopListening();
         }
       }
 
       function stopListening() {
         isListening = false;
-        recognizers.forEach(rec => {
+        isDetecting = false;
+        
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+        }
+        
+        if (recognition) {
           try {
-            rec.stop();
+            recognition.stop();
           } catch (e) {}
-        });
-        recognizers = [];
+          recognition = null;
+        }
         
         micButton.classList.remove('listening');
         statusText.textContent = 'Click microphone to start';
@@ -480,16 +490,6 @@
           stopListening();
         } else {
           startListening();
-        }
-      });
-
-      languageSelect.addEventListener('change', () => {
-        currentLang = languageSelect.value;
-        detectedLangBadge.style.display = 'none';
-        
-        if (isListening) {
-          stopListening();
-          setTimeout(startListening, 100);
         }
       });
 

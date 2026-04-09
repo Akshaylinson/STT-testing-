@@ -146,6 +146,35 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/detect-language", methods=["POST"])
+def detect_language():
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio file provided"}), 400
+    if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
+        return jsonify({"error": "Groq API key not set in .env"}), 500
+
+    file = request.files["audio"]
+    ext = os.path.splitext(file.filename)[1] or ".webm"
+    save_path = os.path.join(UPLOAD_FOLDER, f"{uuid.uuid4().hex}{ext}")
+    file.save(save_path)
+
+    try:
+        client = Groq(api_key=GROQ_API_KEY)
+        with open(save_path, "rb") as audio_file:
+            result = client.audio.transcriptions.create(
+                file=audio_file,
+                model="whisper-large-v3-turbo",
+                response_format="verbose_json",
+                temperature=0.0
+            )
+        return jsonify({"language": result.language})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if os.path.exists(save_path):
+            os.remove(save_path)
+
+
 @app.route("/transcribe", methods=["POST"])
 def transcribe_file():
     if "audio" not in request.files:
