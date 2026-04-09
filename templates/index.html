@@ -212,18 +212,102 @@
 
     <!-- Language Selection -->
     <div class="controls">
-      <select id="lang-select">
-        <option value="">Select Language</option>
+      <input type="text" id="lang-search" placeholder="🔍 Search language..." 
+             style="width: 100%; padding: 12px 16px; border-radius: 12px;
+                    border: 2px solid rgba(255,255,255,0.1); background: rgba(15,17,23,0.6);
+                    color: #e2e8f0; font-size: 0.9rem; margin-bottom: 12px;
+                    transition: border-color 0.3s;">
+      <select id="lang-select" size="6" 
+              style="width: 100%; padding: 8px; border-radius: 12px;
+                     border: 2px solid rgba(255,255,255,0.1); background: rgba(15,17,23,0.6);
+                     color: #e2e8f0; font-size: 0.9rem; cursor: pointer;
+                     transition: border-color 0.3s; max-height: 200px; overflow-y: auto;">
+        <option value="">Select a language</option>
+        <option value="af-ZA">Afrikaans (South Africa)</option>
+        <option value="am-ET">Amharic (Ethiopia)</option>
+        <option value="ar-SA">Arabic (Saudi Arabia)</option>
+        <option value="ar-AE">Arabic (UAE)</option>
+        <option value="ar-EG">Arabic (Egypt)</option>
+        <option value="bn-IN">Bengali (India) - বাংলা</option>
+        <option value="bn-BD">Bengali (Bangladesh) - বাংলা</option>
+        <option value="bg-BG">Bulgarian (Bulgaria)</option>
+        <option value="ca-ES">Catalan (Spain)</option>
+        <option value="zh-CN">Chinese (Mandarin, Simplified)</option>
+        <option value="zh-TW">Chinese (Mandarin, Traditional)</option>
+        <option value="zh-HK">Chinese (Cantonese, Hong Kong)</option>
+        <option value="hr-HR">Croatian (Croatia)</option>
+        <option value="cs-CZ">Czech (Czech Republic)</option>
+        <option value="da-DK">Danish (Denmark)</option>
+        <option value="nl-NL">Dutch (Netherlands)</option>
+        <option value="nl-BE">Dutch (Belgium)</option>
+        <option value="en-US">English (United States)</option>
+        <option value="en-GB">English (United Kingdom)</option>
+        <option value="en-AU">English (Australia)</option>
+        <option value="en-CA">English (Canada)</option>
         <option value="en-IN">English (India)</option>
-        <option value="hi-IN">Hindi (हिन्दी)</option>
-        <option value="ml-IN">Malayalam (മലയാളം)</option>
-        <option value="ta-IN">Tamil (தமிழ்)</option>
-        <option value="te-IN">Telugu (తెలుగు)</option>
-        <option value="kn-IN">Kannada (ಕನ್ನಡ)</option>
-        <option value="bn-IN">Bengali (বাংলা)</option>
-        <option value="mr-IN">Marathi (मराठी)</option>
-        <option value="gu-IN">Gujarati (ગુજરાતી)</option>
-        <option value="pa-IN">Punjabi (ਪੰਜਾਬੀ)</option>
+        <option value="en-NZ">English (New Zealand)</option>
+        <option value="en-ZA">English (South Africa)</option>
+        <option value="et-EE">Estonian (Estonia)</option>
+        <option value="fil-PH">Filipino (Philippines)</option>
+        <option value="fi-FI">Finnish (Finland)</option>
+        <option value="fr-FR">French (France)</option>
+        <option value="fr-CA">French (Canada)</option>
+        <option value="fr-BE">French (Belgium)</option>
+        <option value="fr-CH">French (Switzerland)</option>
+        <option value="de-DE">German (Germany)</option>
+        <option value="de-AT">German (Austria)</option>
+        <option value="de-CH">German (Switzerland)</option>
+        <option value="el-GR">Greek (Greece)</option>
+        <option value="gu-IN">Gujarati (India) - ગુજરાતી</option>
+        <option value="he-IL">Hebrew (Israel)</option>
+        <option value="hi-IN">Hindi (India) - हिन्दी</option>
+        <option value="hu-HU">Hungarian (Hungary)</option>
+        <option value="is-IS">Icelandic (Iceland)</option>
+        <option value="id-ID">Indonesian (Indonesia)</option>
+        <option value="it-IT">Italian (Italy)</option>
+        <option value="it-CH">Italian (Switzerland)</option>
+        <option value="ja-JP">Japanese (Japan)</option>
+        <option value="jv-ID">Javanese (Indonesia)</option>
+        <option value="kn-IN">Kannada (India) - ಕನ್ನಡ</option>
+        <option value="km-KH">Khmer (Cambodia)</option>
+        <option value="ko-KR">Korean (South Korea)</option>
+        <option value="lo-LA">Lao (Laos)</option>
+        <option value="lv-LV">Latvian (Latvia)</option>
+        <option value="lt-LT">Lithuanian (Lithuania)</option>
+        <option value="ms-MY">Malay (Malaysia)</option>
+        <option value="ml-IN">Malayalam (India) - മലയാളം</option>
+        <option value="mr-IN">Marathi (India) - मराठी</option>
+        <option value="ne-NP">Nepali (Nepal)</option>
+        <option value="no-NO">Norwegian (Norway)</option>
+        <option value="fa-IR">Persian (Iran)</option>
+        <option value="pl-PL">Polish (Poland)</option>
+        <option value="pt-BR">Portuguese (Brazil)</option>
+        <option value="pt-PT">Portuguese (Portugal)</option>
+        <option value="pa-IN">Punjabi (India) - ਪੰਜਾਬੀ</option>
+        <option value="ro-RO">Romanian (Romania)</option>
+        <option value="ru-RU">Russian (Russia)</option>
+        <option value="sr-RS">Serbian (Serbia)</option>
+        <option value="si-LK">Sinhala (Sri Lanka)</option>
+        <option value="sk-SK">Slovak (Slovakia)</option>
+        <option value="sl-SI">Slovenian (Slovenia)</option>
+        <option value="es-ES">Spanish (Spain)</option>
+        <option value="es-MX">Spanish (Mexico)</option>
+        <option value="es-AR">Spanish (Argentina)</option>
+        <option value="es-CO">Spanish (Colombia)</option>
+        <option value="es-US">Spanish (United States)</option>
+        <option value="sw-KE">Swahili (Kenya)</option>
+        <option value="sw-TZ">Swahili (Tanzania)</option>
+        <option value="sv-SE">Swedish (Sweden)</option>
+        <option value="ta-IN">Tamil (India) - தமிழ்</option>
+        <option value="ta-LK">Tamil (Sri Lanka) - தமிழ்</option>
+        <option value="te-IN">Telugu (India) - తెలుగు</option>
+        <option value="th-TH">Thai (Thailand)</option>
+        <option value="tr-TR">Turkish (Turkey)</option>
+        <option value="uk-UA">Ukrainian (Ukraine)</option>
+        <option value="ur-PK">Urdu (Pakistan) - اردو</option>
+        <option value="ur-IN">Urdu (India) - اردو</option>
+        <option value="vi-VN">Vietnamese (Vietnam)</option>
+        <option value="zu-ZA">Zulu (South Africa)</option>
       </select>
     </div>
 
@@ -298,15 +382,31 @@
     const LANG_NAMES = { 
       'en-IN': 'English', 'hi-IN': 'Hindi', 'ml-IN': 'Malayalam', 
       'ta-IN': 'Tamil', 'te-IN': 'Telugu', 'kn-IN': 'Kannada',
-      'bn-IN': 'Bengali', 'mr-IN': 'Marathi', 'gu-IN': 'Gujarati', 'pa-IN': 'Punjabi'
+      'bn-IN': 'Bengali', 'mr-IN': 'Marathi', 'gu-IN': 'Gujarati', 'pa-IN': 'Punjabi',
+      'en-US': 'English', 'en-GB': 'English', 'es-ES': 'Spanish', 'fr-FR': 'French',
+      'de-DE': 'German', 'it-IT': 'Italian', 'pt-BR': 'Portuguese', 'ru-RU': 'Russian',
+      'ja-JP': 'Japanese', 'ko-KR': 'Korean', 'zh-CN': 'Chinese', 'ar-SA': 'Arabic'
     };
 
     const GROQ_LANG_MAP = {
-      'en-IN': 'en', 'hi-IN': 'hi', 'ml-IN': 'ml', 'ta-IN': 'ta', 
-      'te-IN': 'te', 'kn-IN': 'kn', 'bn-IN': 'bn', 'mr-IN': 'mr', 
-      'gu-IN': 'gu', 'pa-IN': 'pa'
+      'en-IN': 'en', 'en-US': 'en', 'en-GB': 'en', 'en-AU': 'en', 'en-CA': 'en',
+      'hi-IN': 'hi', 'ml-IN': 'ml', 'ta-IN': 'ta', 'ta-LK': 'ta',
+      'te-IN': 'te', 'kn-IN': 'kn', 'bn-IN': 'bn', 'bn-BD': 'bn',
+      'mr-IN': 'mr', 'gu-IN': 'gu', 'pa-IN': 'pa', 'ur-PK': 'ur', 'ur-IN': 'ur',
+      'es-ES': 'es', 'es-MX': 'es', 'es-AR': 'es', 'es-CO': 'es', 'es-US': 'es',
+      'fr-FR': 'fr', 'fr-CA': 'fr', 'fr-BE': 'fr', 'fr-CH': 'fr',
+      'de-DE': 'de', 'de-AT': 'de', 'de-CH': 'de',
+      'it-IT': 'it', 'it-CH': 'it',
+      'pt-BR': 'pt', 'pt-PT': 'pt',
+      'ru-RU': 'ru', 'ja-JP': 'ja', 'ko-KR': 'ko',
+      'zh-CN': 'zh', 'zh-TW': 'zh', 'zh-HK': 'zh',
+      'ar-SA': 'ar', 'ar-AE': 'ar', 'ar-EG': 'ar',
+      'th-TH': 'th', 'vi-VN': 'vi', 'id-ID': 'id',
+      'tr-TR': 'tr', 'pl-PL': 'pl', 'nl-NL': 'nl', 'nl-BE': 'nl',
+      'sv-SE': 'sv', 'no-NO': 'no', 'da-DK': 'da', 'fi-FI': 'fi'
     };
 
+    const langSearch = document.getElementById('lang-search');
     const langSelect = document.getElementById('lang-select');
     const micBtn = document.getElementById('mic-btn');
     const micStatus = document.getElementById('mic-status');
@@ -318,6 +418,38 @@
     let recognition = null;
     let isRecording = false;
     let finalTranscript = '';
+    let allOptions = [];
+
+    // Store all options for search
+    window.addEventListener('DOMContentLoaded', () => {
+      allOptions = Array.from(langSelect.options);
+    });
+
+    // Language search functionality
+    langSearch.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const filtered = allOptions.filter(option => 
+        option.textContent.toLowerCase().includes(searchTerm) || 
+        option.value.toLowerCase().includes(searchTerm)
+      );
+      
+      langSelect.innerHTML = '';
+      filtered.forEach(option => langSelect.appendChild(option.cloneNode(true)));
+      
+      if (filtered.length === 0) {
+        const noResult = document.createElement('option');
+        noResult.textContent = 'No languages found';
+        noResult.disabled = true;
+        langSelect.appendChild(noResult);
+      }
+    });
+
+    // Select language on click
+    langSelect.addEventListener('change', () => {
+      if (langSelect.value) {
+        langSearch.value = langSelect.options[langSelect.selectedIndex].text;
+      }
+    });
 
     // Tab switching
     document.querySelectorAll('.tab').forEach(tab => {
@@ -369,12 +501,13 @@
         }
         
         if (finalTranscript || interimTranscript) {
+          const langName = langSelect.options[langSelect.selectedIndex]?.text.split('(')[0].trim() || lang;
           document.getElementById('result-text').innerHTML = 
             `<span>${finalTranscript}</span>` +
             `<span class="interim">${interimTranscript}</span>`;
           document.getElementById('result-box').classList.add('visible');
           document.getElementById('badge-model').textContent = 'Browser STT';
-          document.getElementById('badge-lang').textContent = LANG_NAMES[lang];
+          document.getElementById('badge-lang').textContent = langName;
           document.getElementById('badge-time').textContent = 'Real-time';
         }
       };
@@ -446,9 +579,12 @@
     });
 
     function showResult(data) {
+      const selectedLang = langSelect.value;
+      const langName = langSelect.options[langSelect.selectedIndex]?.text.split('(')[0].trim() || data.language;
+      
       document.getElementById('result-text').textContent = data.text || '(no speech detected)';
       document.getElementById('badge-model').textContent = data.model || 'Groq Whisper';
-      document.getElementById('badge-lang').textContent = LANG_NAMES[langSelect.value] || data.language;
+      document.getElementById('badge-lang').textContent = langName;
       document.getElementById('badge-time').textContent = `${data.elapsed}s`;
       document.getElementById('result-box').classList.add('visible');
       hideError();
