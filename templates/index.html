@@ -193,25 +193,7 @@
 <body>
   <div class="card">
     <h1>⚡ Groq Whisper STT</h1>
-    <p class="subtitle">Powered by Groq Whisper Large v3 — Lightning fast & perfect for Indian languages<br><small style="color: #f97316; font-size: 0.85rem; font-weight: 600;">⚠️ IMPORTANT: Always select the correct language before transcribing</small></p>
-
-    <!-- Controls -->
-    <div class="controls">
-      <select id="lang-select">
-        <option value="">⚠️ Select your language (required for accuracy)</option>
-        <option value="en">English</option>
-        <option value="hi">Hindi</option>
-        <option value="ml">Malayalam</option>
-        <option value="ta">Tamil</option>
-        <option value="te">Telugu</option>
-        <option value="kn">Kannada</option>
-        <option value="bn">Bengali</option>
-        <option value="mr">Marathi</option>
-        <option value="gu">Gujarati</option>
-        <option value="pa">Punjabi</option>
-        <option value="ur">Urdu</option>
-      </select>
-    </div>
+    <p class="subtitle">Powered by Groq Whisper Large v3 — Lightning fast & perfect for Indian languages<br><small style="color: #34d399; font-size: 0.85rem; font-weight: 600;">✨ Auto-detects language — No manual selection needed!</small></p>
 
     <!-- Tabs -->
     <div class="tabs">
@@ -309,15 +291,8 @@
       const file = fileInput.files[0];
       if (!file) return;
       
-      const language = document.getElementById('lang-select').value;
-      if (!language) {
-        showError('Please select a language from the dropdown first!');
-        return;
-      }
-      
       const form = new FormData();
       form.append('audio', file);
-      form.append('language', language);
       showLoader();
       const res = await fetch('/transcribe', { method: 'POST', body: form });
       const data = await res.json();
@@ -332,12 +307,6 @@
 
     micBtn.addEventListener('click', async () => {
       if (!isRecording) {
-        const language = document.getElementById('lang-select').value;
-        if (!language) {
-          showError('Please select a language from the dropdown first!');
-          return;
-        }
-        
         const res = await fetch('/mic/start', { method: 'POST' });
         const data = await res.json();
         if (data.error) return showError(data.error);
@@ -352,13 +321,7 @@
         micStatus.classList.remove('live');
         isRecording = false;
         showLoader();
-        const res = await fetch('/mic/stop', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            language: document.getElementById('lang-select').value
-          })
-        });
+        const res = await fetch('/mic/stop', { method: 'POST' });
         const data = await res.json();
         hideLoader();
         micStatus.textContent = 'Click the mic to start recording';

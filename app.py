@@ -43,6 +43,19 @@ LANG_NAMES = {
 }
 
 
+def detect_audio_language(audio_path: str) -> str:
+    """Quick language detection pass using Groq Whisper."""
+    client = Groq(api_key=GROQ_API_KEY)
+    with open(audio_path, "rb") as audio_file:
+        result = client.audio.transcriptions.create(
+            file=audio_file,
+            model="whisper-large-v3-turbo",
+            response_format="verbose_json",
+            temperature=0.0
+        )
+        return result.language
+
+
 def transcribe_with_groq(audio_path: str, language: str = None) -> dict:
     """
     Use Groq Whisper Large v3 to transcribe audio.
@@ -52,27 +65,30 @@ def transcribe_with_groq(audio_path: str, language: str = None) -> dict:
     """
     client = Groq(api_key=GROQ_API_KEY)
     
+    # Auto-detect language if not provided
+    if not language:
+        language = detect_audio_language(audio_path)
+    
     with open(audio_path, "rb") as audio_file:
         start = time.perf_counter()
         
         # Build strong language-specific prompt in native script
         prompt = ""
-        if language:
-            if language == "ml":
-                prompt = "സാങ്കേതികവിദ്യ ആധുനിക ജീവിതത്തിന്റെ"
-            elif language == "hi":
-                prompt = "तकनीक आधुनिक जीवन का एक महत्वपूर्ण हिस्सा"
-            elif language == "ta":
-                prompt = "தொழில்நுட்பம் நவீன வாழ்க்கையின்"
-            elif language == "te":
-                prompt = "సాంకేతికత ఆధునిక జీవితంలో"
-            elif language == "kn":
-                prompt = "ತಂತ್ರಜ್ಞಾನ ಆಧುನಿಕ ಜೀವನದ"
+        if language == "ml":
+            prompt = "സാങ്കേതികവിദ്യ ആധുനിക ജീവിതത്തിന്റെ"
+        elif language == "hi":
+            prompt = "तकनीक आधुनिक जीवन का एक महत्वपूर्ण हिस्सा"
+        elif language == "ta":
+            prompt = "தொழில்நுட்பம் நவீன வாழ்க்கையின்"
+        elif language == "te":
+            prompt = "సాంకేతికత ఆధునిక జీవితంలో"
+        elif language == "kn":
+            prompt = "ತಂತ್ರಜ್ಞಾನ ಆಧುನಿಕ ಜೀವನದ"
         
         transcription = client.audio.transcriptions.create(
             file=audio_file,
             model="whisper-large-v3-turbo",
-            language=language if language else None,
+            language=language,
             prompt=prompt if prompt else None,
             response_format="json",
             temperature=0.0
@@ -80,11 +96,9 @@ def transcribe_with_groq(audio_path: str, language: str = None) -> dict:
         
         elapsed = round(time.perf_counter() - start, 2)
     
-    detected_lang = language or detect_language_from_text(transcription.text)
-    
     return {
         "text": transcription.text,
-        "language": detected_lang,
+        "language": language,
         "confidence": 0.98,
         "elapsed": elapsed,
         "model": "whisper-large-v3-turbo",
@@ -189,14 +203,12 @@ def mic_stop():
     if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
         return jsonify({"error": "Groq API key not set in .env"}), 500
 
-    language = request.json.get("language") or None
-
     audio = np.concatenate(_mic_state["chunks"], axis=0)
     save_path = os.path.join(UPLOAD_FOLDER, f"mic_{uuid.uuid4().hex}.wav")
     wav_write(save_path, SAMPLE_RATE, audio)
 
     try:
-        result = transcribe_with_groq(save_path, language=language)
+        result = transcribe_with_groq(save_path, language=None)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500

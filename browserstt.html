@@ -351,6 +351,9 @@
       let recognizers = [];
       let isListening = false;
       let finalTranscript = '';
+      let currentDetectedLang = 'en-IN';
+      let languageConfidence = 0;
+      const CONFIDENCE_THRESHOLD = 3; // Number of detections before switching
       let currentLang = 'auto';
       let detectedLanguage = null;
 
